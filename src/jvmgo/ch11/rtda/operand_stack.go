@@ -1,9 +1,7 @@
 package rtda
 
-import (
-	"jvmgo/ch11/rtda/heap"
-	"math"
-)
+import "math"
+import "jvmgo/ch11/rtda/heap"
 
 type OperandStack struct {
 	size  uint
@@ -23,7 +21,6 @@ func (self *OperandStack) PushInt(val int32) {
 	self.slots[self.size].num = val
 	self.size++
 }
-
 func (self *OperandStack) PopInt() int32 {
 	self.size--
 	return self.slots[self.size].num
@@ -34,7 +31,6 @@ func (self *OperandStack) PushFloat(val float32) {
 	self.slots[self.size].num = int32(bits)
 	self.size++
 }
-
 func (self *OperandStack) PopFloat() float32 {
 	self.size--
 	bits := uint32(self.slots[self.size].num)
@@ -83,6 +79,13 @@ func (self *OperandStack) PopSlot() Slot {
 	self.size--
 	return self.slots[self.size]
 }
+func (self *OperandStack) Clear() {
+	self.size = 0
+	for i := range self.slots {
+		self.slots[i].ref = nil
+	}
+}
+
 func (self *OperandStack) GetRefFromTop(n uint) *heap.Object {
 	return self.slots[self.size-1-n].ref
 }
@@ -94,12 +97,8 @@ func (self *OperandStack) PushBoolean(val bool) {
 		self.PushInt(0)
 	}
 }
-
-func (self *OperandStack) Clear() {
-	self.size = 0
-	for i := range self.slots {
-		self.slots[i].ref = nil
-	}
+func (self *OperandStack) PopBoolean() bool {
+	return self.PopInt() == 1
 }
 
 // todo

@@ -1,17 +1,18 @@
 package reserved
 
-import (
-	"jvmgo/ch11/instructions/base"
-	"jvmgo/ch11/native"
-	_ "jvmgo/ch11/native/java/io"
-	_ "jvmgo/ch11/native/java/lang"
-	_ "jvmgo/ch11/native/sun/misc"
-	"jvmgo/ch11/rtda"
-)
+import "jvmgo/ch11/instructions/base"
+import "jvmgo/ch11/rtda"
+import "jvmgo/ch11/native"
+import _ "jvmgo/ch11/native/java/io"
+import _ "jvmgo/ch11/native/java/lang"
+import _ "jvmgo/ch11/native/java/security"
+import _ "jvmgo/ch11/native/java/util/concurrent/atomic"
+import _ "jvmgo/ch11/native/sun/io"
+import _ "jvmgo/ch11/native/sun/misc"
+import _ "jvmgo/ch11/native/sun/reflect"
 
-type INVOKE_NATIVE struct {
-	base.NoOperandsInstruction
-}
+// Invoke native method
+type INVOKE_NATIVE struct{ base.NoOperandsInstruction }
 
 func (self *INVOKE_NATIVE) Execute(frame *rtda.Frame) {
 	method := frame.Method()
@@ -24,5 +25,6 @@ func (self *INVOKE_NATIVE) Execute(frame *rtda.Frame) {
 		methodInfo := className + "." + methodName + methodDescriptor
 		panic("java.lang.UnsatisfiedLinkError: " + methodInfo)
 	}
+
 	nativeMethod(frame)
 }

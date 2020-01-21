@@ -1,7 +1,5 @@
 package lang
 
-
-
 import "jvmgo/ch11/native"
 import "jvmgo/ch11/rtda"
 import "jvmgo/ch11/rtda/heap"

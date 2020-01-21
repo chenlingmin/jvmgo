@@ -1,16 +1,16 @@
 package lang
 
-import (
-	"jvmgo/ch11/native"
-	"jvmgo/ch11/rtda"
-	"math"
-)
+import "math"
+import "jvmgo/ch11/native"
+import "jvmgo/ch11/rtda"
+
 const jlFloat = "java/lang/Float"
 
 func init() {
 	native.Register(jlFloat, "floatToRawIntBits", "(F)I", floatToRawIntBits)
 	native.Register(jlFloat, "intBitsToFloat", "(I)F", intBitsToFloat)
 }
+
 // public static native int floatToRawIntBits(float value);
 // (F)I
 func floatToRawIntBits(frame *rtda.Frame) {

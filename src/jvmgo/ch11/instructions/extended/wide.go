@@ -1,13 +1,12 @@
 package extended
 
-import (
-	"jvmgo/ch11/instructions/base"
-	"jvmgo/ch11/instructions/loads"
-	"jvmgo/ch11/instructions/math"
-	"jvmgo/ch11/instructions/stores"
-	"jvmgo/ch11/rtda"
-)
+import "jvmgo/ch11/instructions/base"
+import "jvmgo/ch11/instructions/loads"
+import "jvmgo/ch11/instructions/math"
+import "jvmgo/ch11/instructions/stores"
+import "jvmgo/ch11/rtda"
 
+// Extend local variable index by additional bytes
 type WIDE struct {
 	modifiedInstruction base.Instruction
 }
@@ -62,11 +61,9 @@ func (self *WIDE) FetchOperands(reader *base.BytecodeReader) {
 		self.modifiedInstruction = inst
 	case 0xa9: // ret
 		panic("Unsupported opcode: 0xa9!")
-	}}
+	}
+}
 
 func (self *WIDE) Execute(frame *rtda.Frame) {
 	self.modifiedInstruction.Execute(frame)
 }
-
-
-

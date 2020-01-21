@@ -9,7 +9,6 @@ type Slot struct {
 
 type Slots []Slot
 
-
 func newSlots(slotCount uint) Slots {
 	if slotCount > 0 {
 		return make([]Slot, slotCount)

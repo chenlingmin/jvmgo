@@ -24,19 +24,18 @@ cp_info {
     u1 info[];
 }
 */
-
 type ConstantInfo interface {
 	readInfo(reader *ClassReader)
 }
 
 func readConstantInfo(reader *ClassReader, cp ConstantPool) ConstantInfo {
-
 	tag := reader.readUint8()
 	c := newConstantInfo(tag, cp)
 	c.readInfo(reader)
 	return c
 }
 
+// todo ugly code
 func newConstantInfo(tag uint8, cp ConstantPool) ConstantInfo {
 	switch tag {
 	case CONSTANT_Integer:
@@ -69,7 +68,5 @@ func newConstantInfo(tag uint8, cp ConstantPool) ConstantInfo {
 		return &ConstantInvokeDynamicInfo{}
 	default:
 		panic("java.lang.ClassFormatError: constant pool tag!")
-
 	}
-
 }

@@ -1,10 +1,8 @@
 package references
 
-import (
-	"jvmgo/ch11/instructions/base"
-	"jvmgo/ch11/rtda"
-	"jvmgo/ch11/rtda/heap"
-)
+import "jvmgo/ch11/instructions/base"
+import "jvmgo/ch11/rtda"
+import "jvmgo/ch11/rtda/heap"
 
 // Invoke interface method
 type INVOKE_INTERFACE struct {
@@ -18,7 +16,6 @@ func (self *INVOKE_INTERFACE) FetchOperands(reader *base.BytecodeReader) {
 	reader.ReadUint8() // count
 	reader.ReadUint8() // must be 0
 }
-
 
 func (self *INVOKE_INTERFACE) Execute(frame *rtda.Frame) {
 	cp := frame.Method().Class().ConstantPool()

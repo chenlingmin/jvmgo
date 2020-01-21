@@ -1,15 +1,20 @@
 package heap
 
-import (
-	"fmt"
-	"jvmgo/ch11/classfile"
-	"jvmgo/ch11/classpath"
-)
+import "fmt"
+import "jvmgo/ch11/classfile"
+import "jvmgo/ch11/classpath"
 
+/*
+class names:
+    - primitive types: boolean, byte, int ...
+    - primitive arrays: [Z, [B, [I ...
+    - non-array classes: java/lang/Object ...
+    - array classes: [Ljava/lang/Object; ...
+*/
 type ClassLoader struct {
 	cp          *classpath.Classpath
 	verboseFlag bool
-	classMap    map[string]*Class //loaded classes
+	classMap    map[string]*Class // loaded classes
 }
 
 func NewClassLoader(cp *classpath.Classpath, verboseFlag bool) *ClassLoader {
@@ -18,18 +23,48 @@ func NewClassLoader(cp *classpath.Classpath, verboseFlag bool) *ClassLoader {
 		verboseFlag: verboseFlag,
 		classMap:    make(map[string]*Class),
 	}
+
 	loader.loadBasicClasses()
 	loader.loadPrimitiveClasses()
 	return loader
 }
 
+func (self *ClassLoader) loadBasicClasses() {
+	jlClassClass := self.LoadClass("java/lang/Class")
+	for _, class := range self.classMap {
+		if class.jClass == nil {
+			class.jClass = jlClassClass.NewObject()
+			class.jClass.extra = class
+		}
+	}
+}
+
+func (self *ClassLoader) loadPrimitiveClasses() {
+	for primitiveType, _ := range primitiveTypes {
+		self.loadPrimitiveClass(primitiveType)
+	}
+}
+
+func (self *ClassLoader) loadPrimitiveClass(className string) {
+	class := &Class{
+		accessFlags: ACC_PUBLIC, // todo
+		name:        className,
+		loader:      self,
+		initStarted: true,
+	}
+	class.jClass = self.classMap["java/lang/Class"].NewObject()
+	class.jClass.extra = class
+	self.classMap[className] = class
+}
+
 func (self *ClassLoader) LoadClass(name string) *Class {
 	if class, ok := self.classMap[name]; ok {
+		// already loaded
 		return class
 	}
-	var class *Class
 
-	if name[0] == '[' { // array clas
+	var class *Class
+	if name[0] == '[' { // array class
 		class = self.loadArrayClass(name)
 	} else {
 		class = self.loadNonArrayClass(name)
@@ -39,12 +74,13 @@ func (self *ClassLoader) LoadClass(name string) *Class {
 		class.jClass = jlClassClass.NewObject()
 		class.jClass.extra = class
 	}
+
 	return class
 }
 
 func (self *ClassLoader) loadArrayClass(name string) *Class {
 	class := &Class{
-		accessFlags: ACC_PUBLIC,
+		accessFlags: ACC_PUBLIC, // todo
 		name:        name,
 		loader:      self,
 		initStarted: true,
@@ -62,10 +98,56 @@ func (self *ClassLoader) loadNonArrayClass(name string) *Class {
 	data, entry := self.readClass(name)
 	class := self.defineClass(data)
 	link(class)
+
 	if self.verboseFlag {
 		fmt.Printf("[Loaded %s from %s]\n", name, entry)
 	}
+
 	return class
+}
+
+func (self *ClassLoader) readClass(name string) ([]byte, classpath.Entry) {
+	data, entry, err := self.cp.ReadClass(name)
+	if err != nil {
+		panic("java.lang.ClassNotFoundException: " + name)
+	}
+	return data, entry
+}
+
+// jvms 5.3.5
+func (self *ClassLoader) defineClass(data []byte) *Class {
+	class := parseClass(data)
+	hackClass(class)
+	class.loader = self
+	resolveSuperClass(class)
+	resolveInterfaces(class)
+	self.classMap[class.name] = class
+	return class
+}
+
+func parseClass(data []byte) *Class {
+	cf, err := classfile.Parse(data)
+	if err != nil {
+		//panic("java.lang.ClassFormatError")
+		panic(err)
+	}
+	return newClass(cf)
+}
+
+// jvms 5.4.3.1
+func resolveSuperClass(class *Class) {
+	if class.name != "java/lang/Object" {
+		class.superClass = class.loader.LoadClass(class.superClassName)
+	}
+}
+func resolveInterfaces(class *Class) {
+	interfaceCount := len(class.interfaceNames)
+	if interfaceCount > 0 {
+		class.interfaces = make([]*Class, interfaceCount)
+		for i, interfaceName := range class.interfaceNames {
+			class.interfaces[i] = class.loader.LoadClass(interfaceName)
+		}
+	}
 }
 
 func link(class *Class) {
@@ -73,10 +155,46 @@ func link(class *Class) {
 	prepare(class)
 }
 
+func verify(class *Class) {
+	// todo
+}
+
+// jvms 5.4.2
 func prepare(class *Class) {
-	clacInstanceFieldSlotIds(class)
-	clacStaticFieldSlotIds(class)
+	calcInstanceFieldSlotIds(class)
+	calcStaticFieldSlotIds(class)
 	allocAndInitStaticVars(class)
+}
+
+func calcInstanceFieldSlotIds(class *Class) {
+	slotId := uint(0)
+	if class.superClass != nil {
+		slotId = class.superClass.instanceSlotCount
+	}
+	for _, field := range class.fields {
+		if !field.IsStatic() {
+			field.slotId = slotId
+			slotId++
+			if field.isLongOrDouble() {
+				slotId++
+			}
+		}
+	}
+	class.instanceSlotCount = slotId
+}
+
+func calcStaticFieldSlotIds(class *Class) {
+	slotId := uint(0)
+	for _, field := range class.fields {
+		if field.IsStatic() {
+			field.slotId = slotId
+			slotId++
+			if field.isLongOrDouble() {
+				slotId++
+			}
+		}
+	}
+	class.staticSlotCount = slotId
 }
 
 func allocAndInitStaticVars(class *Class) {
@@ -108,7 +226,7 @@ func initStaticFinalVar(class *Class, field *Field) {
 		case "D":
 			val := cp.GetConstant(cpIndex).(float64)
 			vars.SetDouble(slotId, val)
-		case "Ljava/lang/String":
+		case "Ljava/lang/String;":
 			goStr := cp.GetConstant(cpIndex).(string)
 			jStr := JString(class.Loader(), goStr)
 			vars.SetRef(slotId, jStr)
@@ -116,111 +234,10 @@ func initStaticFinalVar(class *Class, field *Field) {
 	}
 }
 
-func clacStaticFieldSlotIds(class *Class) {
-	slotId := uint(0)
-	for _, field := range class.fields {
-		if field.IsStatic() {
-			field.slotId = slotId
-			slotId++
-			if field.isLongOrDouble() {
-				slotId++
-			}
-		}
+// todo
+func hackClass(class *Class) {
+	if class.name == "java/lang/ClassLoader" {
+		loadLibrary := class.GetStaticMethod("loadLibrary", "(Ljava/lang/Class;Ljava/lang/String;Z)V")
+		loadLibrary.code = []byte{0xb1} // return void
 	}
-	class.staticSlotCount = slotId
-}
-
-func clacInstanceFieldSlotIds(class *Class) {
-	slotId := uint(0)
-	if class.superClass != nil {
-		slotId = class.superClass.instanceSlotCount
-	}
-
-	for _, field := range class.fields {
-		if ! field.IsStatic() {
-			field.slotId = slotId
-			slotId++
-			if field.isLongOrDouble() {
-				slotId++
-			}
-		}
-	}
-	class.instanceSlotCount = slotId
-}
-
-func verify(class *Class) {
-	// todo
-}
-
-func (self *ClassLoader) readClass(name string) ([]byte, classpath.Entry) {
-	data, entry, err := self.cp.ReadClass(name)
-	if err != nil {
-		panic("java.lang.ClassNotFoundException: " + name)
-	}
-	return data, entry
-}
-
-func (self *ClassLoader) defineClass(data []byte) *Class {
-	class := parseClass(data)
-	class.loader = self
-	resolveSuperClass(class)
-	resolveInterfaces(class)
-	self.classMap[class.name] = class
-	return class
-
-}
-
-func (self *ClassLoader) loadBasicClasses() {
-	jlClassClass := self.LoadClass("java/lang/Class")
-	for _, class := range self.classMap {
-		if class.JClass() == nil {
-			class.jClass = jlClassClass.NewObject()
-			class.jClass.extra = class
-		}
-	}
-}
-
-func (self *ClassLoader) loadPrimitiveClasses() {
-	for primitiveType, _ := range primitiveTypes {
-		self.loadPrimitiveClass(primitiveType)
-	}
-}
-
-func (self *ClassLoader) loadPrimitiveClass(className string) {
-	class := &Class{
-		accessFlags: ACC_PUBLIC,
-		name:        className,
-		loader:      self,
-		initStarted: true,
-	}
-
-	class.jClass = self.classMap["java/lang/Class"].NewObject()
-	class.jClass.extra = class
-	self.classMap[className] = class
-}
-
-
-func resolveInterfaces(class *Class) {
-	interfaceCount := len(class.interfaceNames)
-	if interfaceCount > 0 {
-		class.interfaces = make([]*Class, interfaceCount)
-		for i, interfaceName := range class.interfaceNames {
-			class.interfaces[i] = class.loader.LoadClass(interfaceName)
-		}
-	}
-}
-
-func resolveSuperClass(class *Class) {
-	if class.name != "java/lang/Object" {
-		class.superClass = class.loader.LoadClass(class.superClassName)
-	}
-}
-
-func parseClass(data []byte) *Class {
-	cf, err := classfile.Parse(data)
-
-	if err != nil {
-		panic("java.lang.ClassFormatError")
-	}
-	return newClass(cf)
 }

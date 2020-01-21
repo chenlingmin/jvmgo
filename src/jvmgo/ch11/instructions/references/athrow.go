@@ -1,8 +1,6 @@
 package references
 
-import (
-	"reflect"
-)
+import "reflect"
 import "jvmgo/ch11/instructions/base"
 import "jvmgo/ch11/rtda"
 import "jvmgo/ch11/rtda/heap"

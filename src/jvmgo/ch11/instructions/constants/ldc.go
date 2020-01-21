@@ -1,10 +1,8 @@
 package constants
 
-import (
-	"jvmgo/ch11/instructions/base"
-	"jvmgo/ch11/rtda/heap"
-)
+import "jvmgo/ch11/instructions/base"
 import "jvmgo/ch11/rtda"
+import "jvmgo/ch11/rtda/heap"
 
 // Push item from run-time constant pool
 type LDC struct{ base.Index8Instruction }
@@ -35,8 +33,8 @@ func _ldc(frame *rtda.Frame, index uint) {
 		stack.PushRef(internedStr)
 	case *heap.ClassRef:
 		classRef := c.(*heap.ClassRef)
-		classobj := classRef.ResolvedClass().JClass()
-		stack.PushRef(classobj)
+		classObj := classRef.ResolvedClass().JClass()
+		stack.PushRef(classObj)
 	// case MethodType, MethodHandle
 	default:
 		panic("todo: ldc!")

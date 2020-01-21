@@ -7,11 +7,11 @@ type MethodDescriptorParser struct {
 	offset int
 	parsed *MethodDescriptor
 }
+
 func parseMethodDescriptor(descriptor string) *MethodDescriptor {
 	parser := &MethodDescriptorParser{}
 	return parser.parse(descriptor)
 }
-
 
 func (self *MethodDescriptorParser) parse(descriptor string) *MethodDescriptor {
 	self.raw = descriptor

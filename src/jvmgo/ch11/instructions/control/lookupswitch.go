@@ -1,6 +1,5 @@
 package control
 
-//https://cloud.tencent.com/developer/article/1142629
 import "jvmgo/ch11/instructions/base"
 import "jvmgo/ch11/rtda"
 

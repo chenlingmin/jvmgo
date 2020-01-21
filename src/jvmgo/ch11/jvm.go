@@ -1,13 +1,11 @@
 package main
 
-import (
-	"fmt"
-	"jvmgo/ch11/classpath"
-	"jvmgo/ch11/instructions/base"
-	"jvmgo/ch11/rtda"
-	"jvmgo/ch11/rtda/heap"
-	"strings"
-)
+import "fmt"
+import "strings"
+import "jvmgo/ch11/classpath"
+import "jvmgo/ch11/instructions/base"
+import "jvmgo/ch11/rtda"
+import "jvmgo/ch11/rtda/heap"
 
 type JVM struct {
 	cmd         *Cmd
@@ -41,7 +39,7 @@ func (self *JVM) execMain() {
 	mainClass := self.classLoader.LoadClass(className)
 	mainMethod := mainClass.GetMainMethod()
 	if mainMethod == nil {
-		fmt.Println("Main method not found in class %s\n", self.cmd.class)
+		fmt.Printf("Main method not found in class %s\n", self.cmd.class)
 		return
 	}
 
@@ -50,7 +48,6 @@ func (self *JVM) execMain() {
 	frame.LocalVars().SetRef(0, argsArr)
 	self.mainThread.PushFrame(frame)
 	interpret(self.mainThread, self.cmd.verboseInstFlag)
-
 }
 
 func (self *JVM) createArgsArray() *heap.Object {
@@ -62,5 +59,4 @@ func (self *JVM) createArgsArray() *heap.Object {
 		jArgs[i] = heap.JString(self.classLoader, arg)
 	}
 	return argsArr
-
 }

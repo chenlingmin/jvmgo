@@ -1,10 +1,8 @@
 package references
 
-import (
-	"jvmgo/ch11/instructions/base"
-	"jvmgo/ch11/rtda"
-	"jvmgo/ch11/rtda/heap"
-)
+import "jvmgo/ch11/instructions/base"
+import "jvmgo/ch11/rtda"
+import "jvmgo/ch11/rtda/heap"
 
 // Create new object
 type NEW struct{ base.Index16Instruction }
@@ -13,7 +11,6 @@ func (self *NEW) Execute(frame *rtda.Frame) {
 	cp := frame.Method().Class().ConstantPool()
 	classRef := cp.GetConstant(self.Index).(*heap.ClassRef)
 	class := classRef.ResolvedClass()
-
 	if !class.InitStarted() {
 		frame.RevertNextPC()
 		base.InitClass(frame.Thread(), class)

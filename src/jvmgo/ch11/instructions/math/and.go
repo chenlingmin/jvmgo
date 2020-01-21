@@ -1,9 +1,7 @@
 package math
 
-import (
-	"jvmgo/ch11/instructions/base"
-	"jvmgo/ch11/rtda"
-)
+import "jvmgo/ch11/instructions/base"
+import "jvmgo/ch11/rtda"
 
 // Boolean AND int
 type IAND struct{ base.NoOperandsInstruction }

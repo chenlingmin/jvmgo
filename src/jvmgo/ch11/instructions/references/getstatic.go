@@ -1,10 +1,8 @@
 package references
 
-import (
-	"jvmgo/ch11/instructions/base"
-	"jvmgo/ch11/rtda"
-	"jvmgo/ch11/rtda/heap"
-)
+import "jvmgo/ch11/instructions/base"
+import "jvmgo/ch11/rtda"
+import "jvmgo/ch11/rtda/heap"
 
 // Get static field from class
 type GET_STATIC struct{ base.Index16Instruction }
@@ -14,7 +12,6 @@ func (self *GET_STATIC) Execute(frame *rtda.Frame) {
 	fieldRef := cp.GetConstant(self.Index).(*heap.FieldRef)
 	field := fieldRef.ResolvedField()
 	class := field.Class()
-
 	if !class.InitStarted() {
 		frame.RevertNextPC()
 		base.InitClass(frame.Thread(), class)

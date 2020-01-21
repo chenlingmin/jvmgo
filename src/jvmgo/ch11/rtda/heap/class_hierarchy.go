@@ -1,9 +1,8 @@
 package heap
 
-
 // jvms8 6.5.instanceof
 // jvms8 6.5.checkcast
-func (self *Class) isAssignableFrom(other *Class) bool {
+func (self *Class) IsAssignableFrom(other *Class) bool {
 	s, t := other, self
 
 	if s == t {
@@ -44,7 +43,7 @@ func (self *Class) isAssignableFrom(other *Class) bool {
 			// t is array
 			sc := s.ComponentClass()
 			tc := t.ComponentClass()
-			return sc == tc || tc.isAssignableFrom(sc)
+			return sc == tc || tc.IsAssignableFrom(sc)
 		}
 	}
 

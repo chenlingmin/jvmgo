@@ -1,15 +1,11 @@
 package lang
 
-import (
-	"fmt"
-	"jvmgo/ch11/native"
-	"jvmgo/ch11/rtda"
-	"jvmgo/ch11/rtda/heap"
-)
+import "fmt"
+import "jvmgo/ch11/native"
+import "jvmgo/ch11/rtda"
+import "jvmgo/ch11/rtda/heap"
 
-func init() {
-	native.Register("java/lang/Throwable", "fillInStackTrace", "(I)Ljava/lang/Throwable;", fillInStackTrace)
-}
+const jlThrowable = "java/lang/Throwable"
 
 type StackTraceElement struct {
 	fileName   string
@@ -23,6 +19,12 @@ func (self *StackTraceElement) String() string {
 		self.className, self.methodName, self.fileName, self.lineNumber)
 }
 
+func init() {
+	native.Register(jlThrowable, "fillInStackTrace", "(I)Ljava/lang/Throwable;", fillInStackTrace)
+}
+
+// private native Throwable fillInStackTrace(int dummy);
+// (I)Ljava/lang/Throwable;
 func fillInStackTrace(frame *rtda.Frame) {
 	this := frame.LocalVars().GetThis()
 	frame.OperandStack().PushRef(this)
@@ -33,12 +35,20 @@ func fillInStackTrace(frame *rtda.Frame) {
 
 func createStackTraceElements(tObj *heap.Object, thread *rtda.Thread) []*StackTraceElement {
 	skip := distanceToObject(tObj.Class()) + 2
-	frames := thread.GetFrames()[skip:] // 跳过 fillInStackTrace(int), fillInStackTrace() 以及异常类的构造函数
+	frames := thread.GetFrames()[skip:]
 	stes := make([]*StackTraceElement, len(frames))
 	for i, frame := range frames {
 		stes[i] = createStackTraceElement(frame)
 	}
 	return stes
+}
+
+func distanceToObject(class *heap.Class) int {
+	distance := 0
+	for c := class.SuperClass(); c != nil; c = c.SuperClass() {
+		distance++
+	}
+	return distance
 }
 
 func createStackTraceElement(frame *rtda.Frame) *StackTraceElement {
@@ -50,12 +60,4 @@ func createStackTraceElement(frame *rtda.Frame) *StackTraceElement {
 		methodName: method.Name(),
 		lineNumber: method.GetLineNumber(frame.NextPC() - 1),
 	}
-}
-
-func distanceToObject(class *heap.Class) int {
-	distance := 0
-	for c := class.SuperClass(); c != nil; c = c.SuperClass() {
-		distance++
-	}
-	return distance
 }

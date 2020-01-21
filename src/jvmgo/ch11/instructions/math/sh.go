@@ -1,9 +1,7 @@
 package math
 
-import (
-	"jvmgo/ch11/instructions/base"
-	"jvmgo/ch11/rtda"
-)
+import "jvmgo/ch11/instructions/base"
+import "jvmgo/ch11/rtda"
 
 // Shift left int
 type ISHL struct{ base.NoOperandsInstruction }
@@ -12,7 +10,7 @@ func (self *ISHL) Execute(frame *rtda.Frame) {
 	stack := frame.OperandStack()
 	v2 := stack.PopInt()
 	v1 := stack.PopInt()
-	s := uint32(v2) & 0x1f // 11111
+	s := uint32(v2) & 0x1f
 	result := v1 << s
 	stack.PushInt(result)
 }
@@ -48,7 +46,7 @@ func (self *LSHL) Execute(frame *rtda.Frame) {
 	stack := frame.OperandStack()
 	v2 := stack.PopInt()
 	v1 := stack.PopLong()
-	s := uint32(v2) & 0x3f // 111111
+	s := uint32(v2) & 0x3f
 	result := v1 << s
 	stack.PushLong(result)
 }

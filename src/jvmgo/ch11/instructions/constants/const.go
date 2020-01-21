@@ -1,9 +1,7 @@
 package constants
 
-import (
-	"jvmgo/ch11/instructions/base"
-	"jvmgo/ch11/rtda"
-)
+import "jvmgo/ch11/instructions/base"
+import "jvmgo/ch11/rtda"
 
 // Push null
 type ACONST_NULL struct{ base.NoOperandsInstruction }
